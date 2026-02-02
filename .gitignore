@@ -1,0 +1,162 @@
+# =============================================================================
+# Python
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+pip-wheel-metadata/
+
+# Type checking
+.mypy_cache/
+.pytype/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# =============================================================================
+# Credentials & Secrets - CRITICAL SECURITY
+# =============================================================================
+
+# Environment files - may contain tokens
+.env
+.env.*
+.env.local
+.env.*.local
+*.env
+
+# Token files
+*token*
+*secret*
+*credential*
+*password*
+!**/test_*  # Allow test files with these words
+
+# API keys
+*.key
+*.pem
+*.p12
+*.pfx
+
+# SSH keys (should never be in repo)
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.ppk
+
+# Certificate files
+*.crt
+*.cer
+
+# Config files that might contain secrets
+config.local.*
+settings.local.*
+secrets.*
+
+# =============================================================================
+# Claude Code & Local Settings
+# =============================================================================
+
+# Claude Code local settings (contains permissions with tokens)
+.claude/
+
+# Local development guide (may contain environment-specific info)
+CLAUDE.md
+
+# Any local overrides
+*.local
+*.local.*
+
+# Deleted files staging area
+DELETED/
+
+# =============================================================================
+# IDE & Editor
+# =============================================================================
+
+# JetBrains
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+\#*\#
+.#*
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+# =============================================================================
+# OS Files
+# =============================================================================
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =============================================================================
+# Logs & Databases
+# =============================================================================
+
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# =============================================================================
+# Misc
+# =============================================================================
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Node (if any JS tooling used)
+node_modules/
+
+# Documentation build
+docs/_build/
+site/
