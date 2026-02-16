@@ -360,7 +360,9 @@ class OpenCTIClient:
     def _get_fallback(self, cache: TTLCache[Any], key: str) -> tuple[bool, Any, bool]:
         """Get cached response for graceful degradation.
 
-        Only used when service is unavailable (circuit open).
+        Only used when service is unavailable (circuit open or request failed).
+        Uses get_stale() to return expired entries that regular get() would
+        discard — stale data is better than no data during an outage.
 
         Returns:
             (found, value, is_degraded) tuple
@@ -368,7 +370,7 @@ class OpenCTIClient:
         if not self._feature_flags.graceful_degradation:
             return (False, None, False)
 
-        found, value = cache.get(key)
+        found, value = cache.get_stale(key)
         if found and value is not NOT_FOUND:
             logger.info(f"Graceful degradation: using cached response for {key[:16]}...")
             return (True, value, True)
@@ -422,6 +424,31 @@ class OpenCTIClient:
 
         # Check nested exception causes
         if error.__cause__ and type(error.__cause__).__name__ in TRANSIENT_ERRORS:
+            return True
+
+        return False
+
+    @staticmethod
+    def _is_auth_error(error: Exception) -> bool:
+        """Check if error is an authentication/authorization failure.
+
+        Auth errors indicate configuration problems (bad token, wrong
+        permissions), NOT server health issues. They should not count
+        toward circuit breaker failure threshold.
+        """
+        # Check HTTP status codes 401/403
+        if hasattr(error, 'response') and hasattr(error.response, 'status_code'):
+            if error.response.status_code in (401, 403):
+                return True
+
+        # Check error type names commonly used for auth failures
+        error_name = type(error).__name__
+        if error_name in ('AuthenticationError', 'AuthorizationError'):
+            return True
+
+        # Check error message patterns
+        error_msg = str(error).lower()
+        if any(kw in error_msg for kw in ('unauthorized', 'forbidden', 'authentication', 'invalid token')):
             return True
 
         return False
@@ -519,8 +546,12 @@ class OpenCTIClient:
 
                 # Check if this is a transient error worth retrying
                 if not self._is_transient_error(e):
-                    # Non-transient error - don't retry
-                    self._circuit_breaker.record_failure()
+                    # Non-transient error - don't retry.
+                    # Only record circuit breaker failure for server errors,
+                    # NOT for auth/validation errors (which indicate config
+                    # problems, not server health issues).
+                    if not self._is_auth_error(e):
+                        self._circuit_breaker.record_failure()
                     raise
 
                 # Log the transient failure

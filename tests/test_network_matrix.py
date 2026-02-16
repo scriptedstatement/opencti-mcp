@@ -176,17 +176,25 @@ class TestAuthenticationFailures:
     # A4: Auth error doesn't trip circuit breaker
     # ------------------------------------------------------------------
     def test_a4_auth_error_does_not_trip_circuit_breaker(self):
-        """A4: Authentication failures (non-transient) record a failure in
-        the circuit breaker. However, because they are NOT retried,
-        a single occurrence should not open the circuit."""
-        client = _make_client(circuit_breaker_threshold=5, max_retries=3)
-        client._client.indicator.list.side_effect = ValueError("Auth error")
+        """A4: Authentication failures should NEVER trip the circuit breaker,
+        even after many repetitions. Auth errors indicate config problems
+        (bad token), not server health issues."""
+        client = _make_client(circuit_breaker_threshold=2, max_retries=0)
 
-        # One auth failure should NOT open the circuit
-        with pytest.raises(Exception):
-            client.search_indicators("test")
+        # Create an error with HTTP 401 response
+        auth_err = Exception("Unauthorized")
+        auth_err.response = MagicMock()
+        auth_err.response.status_code = 401
+        client._client.indicator.list.side_effect = auth_err
 
+        # Repeat MORE times than the circuit breaker threshold
+        for _ in range(5):
+            with pytest.raises(Exception):
+                client.search_indicators("test")
+
+        # Circuit should STILL be closed — auth errors don't count
         assert client._circuit_breaker.state == CircuitState.CLOSED
+        assert client._circuit_breaker._failure_count == 0
 
     # ------------------------------------------------------------------
     # A5: Token never appears in logs
@@ -441,15 +449,13 @@ class TestGracefulDegradation:
     # GD5: Stale cache used even after TTL expired during degradation
     # ------------------------------------------------------------------
     def test_gd5_stale_cache_used_after_ttl(self):
-        """GD5: During degradation, stale (TTL-expired) cache entries are used.
-
-        Note: The _get_fallback method calls cache.get() which enforces TTL.
-        If TTL has passed, the entry will have been evicted and fallback fails.
-        This tests the CURRENT behavior — TTL expiry means no fallback.
+        """GD5: During degradation, stale (TTL-expired) cache entries ARE
+        used via get_stale(). Stale data is better than no data during
+        an outage.
         """
         client = self._make_degradation_client()
 
-        # Populate cache
+        # Populate cache with a successful call
         original = client.search_indicators("cached_query")
 
         # Manually expire the cache entry by moving its timestamp back
@@ -464,17 +470,11 @@ class TestGracefulDegradation:
         for _ in range(client._circuit_breaker.failure_threshold):
             client._circuit_breaker.record_failure()
 
-        # The fallback calls cache.get() which checks TTL.
-        # If the entry is expired, fallback will fail -> ConnectionError.
-        # This tests the CURRENT behavior.
-        try:
-            result = client.search_indicators("cached_query")
-            # If it succeeds, stale was used (good for resilience)
-            assert result == original
-        except ConnectionError:
-            # Entry was expired and evicted -> fallback not available
-            # This is the expected behavior given how _get_fallback works
-            pass
+        # The fallback now uses get_stale() which bypasses TTL.
+        # Stale cached data should be returned during the outage.
+        result = client.search_indicators("cached_query")
+        assert result == original
+        assert client._last_response_from_cache is True
 
     # ------------------------------------------------------------------
     # GD6: Recovery from degraded state — circuit closes, fresh data
@@ -1186,3 +1186,34 @@ class TestTTLCacheInternals:
         assert stats["misses"] == 1
         assert stats["size"] == 1
         assert stats["hit_rate"] == 0.5
+
+    def test_get_stale_returns_expired_entries(self):
+        """get_stale() returns entries even after TTL has expired."""
+        cache = TTLCache(ttl_seconds=1, max_size=100, name="stale")
+        cache.set("key", "value")
+
+        # Entry is fresh — both get() and get_stale() return it
+        found, val = cache.get("key")
+        assert found is True and val == "value"
+
+        found, val = cache.get_stale("key")
+        assert found is True and val == "value"
+
+        # Expire the entry
+        with cache._lock:
+            for entry in cache._cache.values():
+                entry.timestamp = time.monotonic() - 9999
+
+        # get() returns miss (expired)
+        found, val = cache.get("key")
+        assert found is False
+
+        # get_stale() still returns the expired data
+        found, val = cache.get_stale("key")
+        assert found is True and val == "value"
+
+    def test_get_stale_returns_miss_for_absent_key(self):
+        """get_stale() returns (False, None) for keys never cached."""
+        cache = TTLCache(ttl_seconds=60, max_size=100, name="stale")
+        found, val = cache.get_stale("nonexistent")
+        assert found is False and val is None

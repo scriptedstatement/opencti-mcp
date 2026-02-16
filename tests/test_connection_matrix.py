@@ -274,17 +274,15 @@ class TestTokenHandling:
         with pytest.raises(ConfigurationError, match="token is required"):
             make_config(opencti_token=SecretStr(""))
 
-    def test_c19_whitespace_only_token_not_rejected_by_config(self) -> None:
-        """C19: Whitespace-only token — Config does NOT reject it.
+    def test_c19_whitespace_only_token_rejected_by_load(self) -> None:
+        """C19: Whitespace-only token from env var is rejected by _load_token().
 
-        NOTE: This documents a source code behavior. SecretStr('   ') is truthy
-        because len('   ') > 0, so _validate_values passes. The _load_token_file
-        path strips whitespace and returns None for empty results, but the
-        Config constructor does not strip token values itself.
+        _load_token() now strips and checks token values, so '   ' is
+        treated as empty and Config.load() raises ConfigurationError.
         """
-        # Whitespace-only token passes Config validation (potential bug)
-        config = make_config(opencti_token=SecretStr("   "))
-        assert config.opencti_token.get_secret_value() == "   "
+        with patch.dict("os.environ", {"OPENCTI_TOKEN": "   "}, clear=False):
+            with pytest.raises(ConfigurationError, match="token not found"):
+                Config.load()
 
 
 # =============================================================================

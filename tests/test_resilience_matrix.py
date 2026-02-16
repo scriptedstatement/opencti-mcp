@@ -875,6 +875,70 @@ class TestTransientErrorClassification:
         assert client._is_transient_error(outer)
 
 
+class TestAuthErrorClassification:
+    """Verify _is_auth_error classification logic."""
+
+    def test_http_401_is_auth_error(self):
+        """HTTP 401 is classified as auth error."""
+        client = make_client()
+        err = MagicMock()
+        err.response = MagicMock()
+        err.response.status_code = 401
+        assert client._is_auth_error(err) is True
+
+    def test_http_403_is_auth_error(self):
+        """HTTP 403 is classified as auth error."""
+        client = make_client()
+        err = MagicMock()
+        err.response = MagicMock()
+        err.response.status_code = 403
+        assert client._is_auth_error(err) is True
+
+    def test_http_500_is_not_auth_error(self):
+        """HTTP 500 is NOT an auth error."""
+        client = make_client()
+        err = MagicMock()
+        err.response = MagicMock()
+        err.response.status_code = 500
+        err.__str__ = lambda self: "server error"
+        assert client._is_auth_error(err) is False
+
+    def test_unauthorized_message_is_auth_error(self):
+        """Error with 'unauthorized' in message is classified as auth error."""
+        client = make_client()
+        err = ValueError("Unauthorized access")
+        assert client._is_auth_error(err) is True
+
+    def test_invalid_token_message_is_auth_error(self):
+        """Error with 'invalid token' in message is classified as auth error."""
+        client = make_client()
+        err = RuntimeError("Invalid token provided")
+        assert client._is_auth_error(err) is True
+
+    def test_generic_error_is_not_auth_error(self):
+        """Generic errors are NOT classified as auth errors."""
+        client = make_client()
+        err = RuntimeError("something broke")
+        assert client._is_auth_error(err) is False
+
+    @patch("opencti_mcp.client.time_module.sleep")
+    def test_auth_error_does_not_record_circuit_failure(self, mock_sleep):
+        """Auth errors do NOT increment circuit breaker failure count."""
+        client = make_client(make_config(max_retries=0, circuit_breaker_threshold=2))
+
+        auth_err = Exception("Unauthorized")
+        auth_err.response = MagicMock()
+        auth_err.response.status_code = 401
+
+        for _ in range(5):
+            with pytest.raises(Exception):
+                client._execute_with_retry(lambda: (_ for _ in ()).throw(auth_err))
+
+        # Circuit should still be closed
+        assert client._circuit_breaker.state == CircuitState.CLOSED
+        assert client._circuit_breaker._failure_count == 0
+
+
 class TestCircuitBreakerIntegration:
     """Integration tests: circuit breaker with _execute_with_retry."""
 

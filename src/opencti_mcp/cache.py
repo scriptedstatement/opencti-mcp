@@ -89,9 +89,10 @@ class TTLCache(Generic[T]):
             entry = self._cache[key]
             ttl = self.negative_ttl if entry.is_negative else self.ttl
 
-            # Check expiration
+            # Check expiration — don't delete, just return miss.
+            # Expired entries are kept for get_stale() (graceful degradation)
+            # and will be evicted by LRU when capacity is needed.
             if time.monotonic() - entry.timestamp > ttl:
-                del self._cache[key]
                 self._misses += 1
                 return (False, None)
 
@@ -123,6 +124,22 @@ class TTLCache(Generic[T]):
             timestamp=time.monotonic(),
             is_negative=is_negative,
         )
+
+    def get_stale(self, key: str) -> tuple[bool, Optional[T]]:
+        """Get value from cache, ignoring TTL expiration.
+
+        Used for graceful degradation when the server is unavailable.
+        Returns expired entries that would normally be evicted by get().
+
+        Returns:
+            (found, value) tuple (same as get(), but TTL is not enforced)
+        """
+        with self._lock:
+            if key not in self._cache:
+                return (False, None)
+
+            entry = self._cache[key]
+            return (True, entry.value)
 
     def invalidate(self, key: str) -> bool:
         """Remove specific entry from cache."""
