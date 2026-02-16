@@ -52,7 +52,7 @@ python -m opencti_mcp
 
 ## Features
 
-### Search Operations (30+ tools)
+### Search Operations (32 tools, 28 visible in read-only mode)
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -126,6 +126,8 @@ Settings are loaded via `Config.load()` classmethod (`config.py`) with `SecretSt
 | `OPENCTI_TIMEOUT` | `60` | Request timeout in seconds |
 | `OPENCTI_MAX_RESULTS` | `100` | Maximum results per query |
 | `OPENCTI_MAX_RETRIES` | `3` | Retry attempts for failures |
+| `OPENCTI_RETRY_DELAY` | `1.0` | Initial retry delay (seconds) |
+| `OPENCTI_RETRY_MAX_DELAY` | `30.0` | Maximum retry delay (seconds) |
 | `OPENCTI_SSL_VERIFY` | `true` | Verify SSL certificates |
 | `OPENCTI_CIRCUIT_THRESHOLD` | `5` | Failures before circuit opens |
 | `OPENCTI_CIRCUIT_TIMEOUT` | `60` | Seconds before circuit recovery |
@@ -206,7 +208,7 @@ opencti-mcp/
 ├── src/opencti_mcp/
 │   ├── __init__.py       # Package exports
 │   ├── __main__.py       # Entry point (with startup validation)
-│   ├── server.py         # MCP server (30+ tools)
+│   ├── server.py         # MCP server (32 tools)
 │   ├── client.py         # OpenCTI API client (with caching)
 │   ├── config.py         # Configuration management
 │   ├── validation.py     # Input validation
@@ -283,7 +285,7 @@ Use `get_network_status` tool to view:
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.10+
 - OpenCTI 6.x instance
 - pycti 6.x
 - mcp 1.x

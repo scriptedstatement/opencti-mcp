@@ -34,7 +34,7 @@ Create a `.env` file:
 
 ```
 OPENCTI_URL=https://your-opencti-instance.example.com
-OPENCTI_API_TOKEN=your-api-token-here
+OPENCTI_TOKEN=your-api-token-here
 ```
 
 **Never paste tokens in chat.** Edit the file directly.
@@ -140,21 +140,30 @@ https://docs.opencti.io/latest/deployment/connectors/
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `OPENCTI_URL` | Yes | `http://localhost:8080` | OpenCTI instance URL |
-| `OPENCTI_API_TOKEN` | Yes | - | API token from OpenCTI |
+| `OPENCTI_TOKEN` | Yes | - | API token from OpenCTI |
 | `OPENCTI_READ_ONLY` | No | `true` | Disable write operations |
-| `OPENCTI_TIMEOUT` | No | `30` | Request timeout (seconds) |
+| `OPENCTI_TIMEOUT` | No | `60` | Request timeout (seconds) |
 | `OPENCTI_SSL_VERIFY` | No | `true` | Verify SSL certificates |
+| `OPENCTI_MAX_RESULTS` | No | `100` | Maximum results per query |
+| `OPENCTI_MAX_RETRIES` | No | `3` | Retry attempts for failures |
+| `OPENCTI_RETRY_DELAY` | No | `1.0` | Initial retry delay (seconds) |
+| `OPENCTI_RETRY_MAX_DELAY` | No | `30.0` | Maximum retry delay (seconds) |
+| `OPENCTI_CIRCUIT_THRESHOLD` | No | `5` | Failures before circuit opens |
+| `OPENCTI_CIRCUIT_TIMEOUT` | No | `60` | Seconds before circuit recovery |
+| `OPENCTI_EXTRA_OBSERVABLE_TYPES` | No | - | Custom observable types (comma-separated) |
+| `OPENCTI_EXTRA_PATTERN_TYPES` | No | - | Custom pattern types (comma-separated) |
+| `OPENCTI_LOG_FORMAT` | No | `json` | Log format: "json" or "text" |
 
 ### Token Storage Options
 
 **Option 1: Environment variable (recommended)**
 ```bash
-export OPENCTI_API_TOKEN="your-token"
+export OPENCTI_TOKEN="your-token"
 ```
 
 **Option 2: .env file**
 ```
-OPENCTI_API_TOKEN=your-token
+OPENCTI_TOKEN=your-token
 ```
 
 **Option 3: Token file (most secure)**
@@ -192,7 +201,7 @@ else:
 - Verify OpenCTI is running: `docker ps | grep opencti`
 
 **401 Unauthorized:**
-- Check OPENCTI_API_TOKEN is correct
+- Check OPENCTI_TOKEN is correct
 - Token may have expired - generate new one in OpenCTI
 
 **SSL certificate errors:**

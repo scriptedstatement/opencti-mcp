@@ -123,7 +123,7 @@ class OpenCTIMCPServer:
 1. Search tools (18) - Query OpenCTI entities
 2. Entity tools (5) - Get by ID, relationships
 3. Write tools (4) - Create entities (conditional)
-4. System tools (3) - Health, connectors, metrics
+4. System tools (5) - Health, connectors, metrics, force_reconnect, cache stats
 
 ### client.py (~2780 LOC)
 
@@ -188,7 +188,7 @@ class Config:
     opencti_url: str
     opencti_token: SecretStr
     read_only: bool = True
-    timeout_seconds: int = 30
+    timeout_seconds: int = 60
     # ... more settings
 ```
 
@@ -296,10 +296,7 @@ class FeatureFlags:
     response_caching: bool = False      # Cache search results
     graceful_degradation: bool = True   # Return cached on failure
     startup_validation: bool = True     # Test connectivity on start
-    version_checking: bool = True       # Check OpenCTI version
     negative_caching: bool = True       # Cache "not found" results
-    request_correlation: bool = True    # Add request IDs to logs
-    adaptive_timeouts: bool = False     # Dynamic timeout adjustment
 
     @classmethod
     def load(cls) -> "FeatureFlags":
