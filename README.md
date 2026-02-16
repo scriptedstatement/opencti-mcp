@@ -20,7 +20,7 @@ claude
 **Benefits of Claude-IR installation:**
 - Guided setup with component selection
 - Pre-configured MCP integration
-- Works alongside forensic-rag-mcp (knowledge search) and forensic-triage-mcp (file validation)
+- Works alongside forensic-rag-mcp (knowledge search) and windows-triage-mcp (file validation)
 - Forensic discipline rules and investigation workflows
 
 **Note:** This MCP requires an OpenCTI instance. See `SETUP.md` for guidance on connecting to or deploying OpenCTI.

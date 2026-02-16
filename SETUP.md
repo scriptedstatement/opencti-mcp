@@ -231,7 +231,7 @@ This creates the virtual environment and installs dependencies. You still need t
 If you don't have OpenCTI and don't want to deploy it:
 
 - **Skip opencti-mcp** during Claude-IR setup
-- **forensic-rag-mcp** and **forensic-triage-mcp** work independently
+- **forensic-rag-mcp** and **windows-triage-mcp** work independently
 - You lose: hash reputation, IOC lookups, threat actor context
 - You keep: knowledge search, file validation, process analysis
 

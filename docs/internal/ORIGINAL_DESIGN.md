@@ -1455,9 +1455,9 @@ Before releasing, verify:
 
 ## Appendices
 
-### A. Comparison with forensic-triage-mcp
+### A. Comparison with windows-triage-mcp
 
-| Aspect | forensic-triage-mcp | opencti-mcp (proposed) |
+| Aspect | windows-triage-mcp | opencti-mcp (proposed) |
 |--------|---------------------|------------------------|
 | Input validation | MAX_* constants, manual checks | Centralized validation.py |
 | Credential handling | Module-level token loading | Pydantic SecretStr, Config class |
