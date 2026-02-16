@@ -39,17 +39,8 @@ class FeatureFlags:
     # Startup validation (test connectivity on startup)
     startup_validation: bool = True
 
-    # API version checking
-    version_checking: bool = True
-
     # Negative caching (cache "not found" results)
     negative_caching: bool = True
-
-    # Enhanced logging with request correlation
-    request_correlation: bool = True
-
-    # Adaptive timeout adjustment based on latency
-    adaptive_timeouts: bool = False
 
     @classmethod
     def load(cls) -> "FeatureFlags":
@@ -71,10 +62,7 @@ class FeatureFlags:
             response_caching=parse_bool("response_caching", False),
             graceful_degradation=parse_bool("graceful_degradation", True),
             startup_validation=parse_bool("startup_validation", True),
-            version_checking=parse_bool("version_checking", True),
             negative_caching=parse_bool("negative_caching", True),
-            request_correlation=parse_bool("request_correlation", True),
-            adaptive_timeouts=parse_bool("adaptive_timeouts", False),
         )
 
         # Log enabled flags at debug level
@@ -90,10 +78,7 @@ class FeatureFlags:
             "response_caching": self.response_caching,
             "graceful_degradation": self.graceful_degradation,
             "startup_validation": self.startup_validation,
-            "version_checking": self.version_checking,
             "negative_caching": self.negative_caching,
-            "request_correlation": self.request_correlation,
-            "adaptive_timeouts": self.adaptive_timeouts,
         }
 
     def is_enabled(self, flag_name: str) -> bool:

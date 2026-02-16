@@ -114,6 +114,8 @@ All search tools support advanced filtering:
 
 ## Configuration
 
+Settings are loaded via `Config.load()` classmethod (`config.py`) with `SecretStr` token protection and helper parsers for typed env vars.
+
 ### Environment Variables
 
 | Variable | Default | Description |
@@ -121,7 +123,7 @@ All search tools support advanced filtering:
 | `OPENCTI_URL` | `http://localhost:8080` | OpenCTI instance URL |
 | `OPENCTI_TOKEN` | - | API token (required) |
 | `OPENCTI_READ_ONLY` | `true` | Disable write operations |
-| `OPENCTI_TIMEOUT` | `30` | Request timeout in seconds |
+| `OPENCTI_TIMEOUT` | `60` | Request timeout in seconds |
 | `OPENCTI_MAX_RESULTS` | `100` | Maximum results per query |
 | `OPENCTI_MAX_RETRIES` | `3` | Retry attempts for failures |
 | `OPENCTI_SSL_VERIFY` | `true` | Verify SSL certificates |
@@ -138,12 +140,9 @@ Control optional features via environment variables (prefix: `FF_`):
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `FF_STARTUP_VALIDATION` | `true` | Test API connectivity on server start |
-| `FF_VERSION_CHECKING` | `true` | Check OpenCTI version compatibility |
 | `FF_RESPONSE_CACHING` | `false` | Cache search results (reduces API calls) |
 | `FF_GRACEFUL_DEGRADATION` | `true` | Return cached results when service unavailable |
 | `FF_NEGATIVE_CACHING` | `true` | Cache "not found" results |
-| `FF_REQUEST_CORRELATION` | `true` | Add request IDs to logs |
-| `FF_ADAPTIVE_TIMEOUTS` | `false` | Dynamically adjust timeouts based on latency |
 
 ### Token Configuration
 
@@ -263,14 +262,16 @@ python -c "from opencti_mcp import OpenCTIClient, Config; c = OpenCTIClient(Conf
 
 ## Production Considerations
 
-### Recommended Settings for Remote Instances
+### Recommended Settings for Remote/Cloud Instances
 
 ```bash
-export OPENCTI_TIMEOUT=60          # Higher for remote
+export OPENCTI_TIMEOUT=120         # Higher for cloud (default 60 may be tight for complex queries)
 export OPENCTI_MAX_RETRIES=3       # Retry on transient failures
 export OPENCTI_SSL_VERIFY=true     # Always for production
 export OPENCTI_READ_ONLY=true      # Unless writes needed
 ```
+
+> **Cloud users:** If you experience timeouts or circuit breaker trips, increase `OPENCTI_TIMEOUT` to 120-180. Complex threat intel queries on remote instances can take 60+ seconds under load.
 
 ### Adaptive Metrics
 

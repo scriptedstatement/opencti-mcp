@@ -145,7 +145,7 @@ class Config:
 
     opencti_url: str
     opencti_token: SecretStr
-    timeout_seconds: int = 30
+    timeout_seconds: int = 60
     max_results: int = 100
     rate_limit_queries: int = 60       # queries per minute
     rate_limit_enrichment: int = 10    # enrichments per hour
@@ -235,7 +235,7 @@ class Config:
             )
 
         # Load optional settings with safe parsing
-        timeout = _parse_int_env("OPENCTI_TIMEOUT", 30)
+        timeout = _parse_int_env("OPENCTI_TIMEOUT", 60)
         max_results = _parse_int_env("OPENCTI_MAX_RESULTS", 100)
 
         # Access control - default to read-only for security
