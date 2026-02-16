@@ -275,6 +275,8 @@ class OpenCTIClient:
         # Adaptive metrics for network-aware configuration
         # Use provided instance or fall back to global singleton
         self._adaptive_metrics = adaptive_metrics or get_global_metrics()
+        self._effective_timeout = config.timeout_seconds
+        self._adapt_success_count = 0
 
         # Feature flags
         self._feature_flags = get_feature_flags()
@@ -438,6 +440,41 @@ class OpenCTIClient:
         jitter = delay * random.uniform(0.1, 0.2)
         return delay + jitter
 
+    def _maybe_adapt_timeout(self) -> None:
+        """Apply adaptive timeout if metrics warrant a change.
+
+        Checks every 5 successful requests. Only adapts after 10+ samples
+        and when the recommended timeout differs by >25% from current.
+        Updates the pycti client's timeout in-place (no reconnect needed).
+        """
+        self._adapt_success_count += 1
+        if self._adapt_success_count % 5 != 0:
+            return
+
+        adaptive = self._adaptive_metrics.get_adaptive_config()
+        if adaptive.probe_count < 10:
+            return
+
+        recommended = adaptive.recommended_timeout
+        current = self._effective_timeout
+
+        if current > 0 and abs(recommended - current) / current > 0.25:
+            new_timeout = max(10, min(recommended, 300))
+            old_timeout = self._effective_timeout
+            self._effective_timeout = new_timeout
+            logger.info(
+                f"Adaptive timeout adjusted: {old_timeout}s -> {new_timeout}s",
+                extra={
+                    "old_timeout": old_timeout,
+                    "new_timeout": new_timeout,
+                    "sample_count": adaptive.probe_count,
+                    "success_rate": adaptive.success_rate,
+                }
+            )
+            with self._client_lock:
+                if self._client is not None:
+                    self._client.requests_timeout = new_timeout
+
     def _execute_with_retry(self, func: Any, *args: Any, **kwargs: Any) -> Any:
         """Execute function with exponential backoff retry.
 
@@ -467,6 +504,7 @@ class OpenCTIClient:
                     start_time=attempt_start,
                     success=True
                 )
+                self._maybe_adapt_timeout()
                 return result
 
             except Exception as e:
@@ -541,7 +579,7 @@ class OpenCTIClient:
                     self.config.opencti_url,
                     self.config.opencti_token.get_secret_value(),
                     log_level="error",
-                    requests_timeout=self.config.timeout_seconds,
+                    requests_timeout=self._effective_timeout,
                     ssl_verify=self.config.ssl_verify
                 )
                 return self._client
@@ -854,6 +892,7 @@ class OpenCTIClient:
             "adaptive_metrics": adaptive_status,
             "current_config": {
                 "timeout_seconds": self.config.timeout_seconds,
+                "effective_timeout_seconds": self._effective_timeout,
                 "max_retries": self.config.max_retries,
                 "retry_base_delay": self.config.retry_base_delay
             },

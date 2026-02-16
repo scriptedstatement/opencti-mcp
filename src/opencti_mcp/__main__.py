@@ -6,15 +6,15 @@ Usage:
 Environment Variables:
     OPENCTI_URL: OpenCTI server URL (default: http://localhost:8080)
     OPENCTI_TOKEN: API token for authentication
-    OPENCTI_TIMEOUT: Request timeout in seconds (default: 30)
+    OPENCTI_TIMEOUT: Request timeout in seconds (default: 60)
     OPENCTI_MAX_RESULTS: Maximum results per query (default: 100)
     OPENCTI_LOG_FORMAT: Log format - "json" (default) or "text"
 
 Feature Flags (FF_ prefix):
     FF_STARTUP_VALIDATION: Enable startup connectivity test (default: true)
-    FF_VERSION_CHECKING: Check OpenCTI version on startup (default: true)
     FF_RESPONSE_CACHING: Cache search responses (default: false)
     FF_GRACEFUL_DEGRADATION: Return cached results on failure (default: true)
+    FF_NEGATIVE_CACHING: Cache "not found" results (default: true)
 
 Token can also be provided via:
     ~/.config/opencti-mcp/token (with 600 permissions)
