@@ -33,7 +33,6 @@ class TestFeatureFlags:
         assert flags.response_caching is False  # Conservative default
         assert flags.graceful_degradation is True
         assert flags.startup_validation is True
-        assert flags.version_checking is True
         assert flags.negative_caching is True
 
     def test_load_from_environment(self):

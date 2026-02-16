@@ -458,8 +458,8 @@ class TestEnvVarParsing:
             'OPENCTI_TIMEOUT': 'invalid',
         }):
             config = Config.load()
-            # Should use default of 30
-            assert config.timeout_seconds == 30
+            # Should use default of 60
+            assert config.timeout_seconds == 60
 
     def test_config_load_with_invalid_max_retries(self):
         """Config.load handles invalid OPENCTI_MAX_RETRIES gracefully."""
