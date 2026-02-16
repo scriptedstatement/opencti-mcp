@@ -405,7 +405,9 @@ class TestConfigContracts:
 
     def test_config_has_required_fields(self):
         """Config has all required fields."""
-        config = Config.load()
+        with patch.dict('os.environ', {'OPENCTI_TOKEN': 'test-token'}, clear=False):
+            with patch('opencti_mcp.config._load_token', return_value='test-token'):
+                config = Config.load()
 
         # Required fields exist
         assert hasattr(config, 'opencti_url')
@@ -417,9 +419,10 @@ class TestConfigContracts:
     def test_config_defaults_are_safe(self):
         """Config defaults are secure."""
         # Read-only should default to True
-        with patch.dict('os.environ', {}, clear=False):
-            config = Config.load()
-            assert config.read_only is True
+        with patch.dict('os.environ', {'OPENCTI_TOKEN': 'test-token'}, clear=False):
+            with patch('opencti_mcp.config._load_token', return_value='test-token'):
+                config = Config.load()
+                assert config.read_only is True
 
     def test_config_token_is_secret(self):
         """Config token is wrapped in SecretStr."""
@@ -541,5 +544,7 @@ class TestBackwardCompatibility:
 
     def test_config_load_returns_config(self):
         """Config.load() returns Config instance."""
-        config = Config.load()
+        with patch.dict('os.environ', {'OPENCTI_TOKEN': 'test-token'}, clear=False):
+            with patch('opencti_mcp.config._load_token', return_value='test-token'):
+                config = Config.load()
         assert isinstance(config, Config)
