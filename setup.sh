@@ -13,9 +13,9 @@ echo "Setting up opencti-mcp..."
 
 # Check Python version
 python_version=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-required="3.11"
+required="3.10"
 if [ "$(printf '%s\n' "$required" "$python_version" | sort -V | head -n1)" != "$required" ]; then
-    echo "Error: Python 3.11+ required (found $python_version)"
+    echo "Error: Python 3.10+ required (found $python_version)"
     exit 1
 fi
 
