@@ -282,9 +282,14 @@ def _load_token() -> Optional[str]:
     """
     # 1. Environment variable (highest priority)
     token = os.getenv("OPENCTI_TOKEN")
-    if token and token.strip():
-        logger.debug("Loaded token from OPENCTI_TOKEN environment variable")
-        return token.strip()
+    if token is not None:
+        stripped = token.strip()
+        if stripped:
+            logger.debug("Loaded token from OPENCTI_TOKEN environment variable")
+            return stripped
+        # Non-empty but whitespace-only — treat as explicitly invalid, don't fall through
+        if token:
+            return None
 
     # 2. Config file (primary location)
     config_file = Path.home() / ".config" / "opencti-mcp" / "token"
