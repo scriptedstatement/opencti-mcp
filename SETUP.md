@@ -26,7 +26,24 @@ If you already have OpenCTI running:
 3. Scroll to **API Access**
 4. Copy your API token
 
-### Step 2: Configure the MCP
+### Step 2: Determine Your URL and Protocol
+
+**Local Docker (same machine):** OpenCTI's Docker deployment serves HTTP on port 8080 by default. Traffic stays on localhost — HTTP is fine.
+```
+OPENCTI_URL=http://localhost:8080
+```
+
+**Remote server or cloud:** Use HTTPS. OpenCTI supports TLS natively (`APP__HTTPS_CERT__*`) or via a reverse proxy (Nginx, Caddy, Traefik).
+```
+OPENCTI_URL=https://opencti.example.com
+```
+
+**Self-signed certificates:** If your instance uses a self-signed cert, also set:
+```
+OPENCTI_SSL_VERIFY=false
+```
+
+### Step 3: Configure the MCP
 
 Create a `.env` file:
 - **Claude-IR install:** Create at `/path/to/claude-ir/.env`
@@ -37,18 +54,29 @@ OPENCTI_URL=https://your-opencti-instance.example.com
 OPENCTI_TOKEN=your-api-token-here
 ```
 
+Secure the file: `chmod 600 .env`
+
 **Never paste tokens in chat.** Edit the file directly.
 
-### Step 3: Verify Connection
+### Step 4: Verify Connection
 
 ```bash
 cd opencti-mcp
 source .venv/bin/activate
 python -c "
-from opencti_mcp import OpenCTIClient, Config
-config = Config.load()
+from opencti_mcp.config import Config
+from opencti_mcp.client import OpenCTIClient
+config = Config.from_env()
 client = OpenCTIClient(config)
-print('Connected!' if client.is_available() else 'Connection failed')
+result = client.validate_connection(skip_connectivity=False)
+if result['valid']:
+    ver = result.get('opencti_version', 'unknown')
+    print(f'Connected to OpenCTI (version: {ver})')
+else:
+    for e in result.get('errors', []):
+        print(f'ERROR: {e}')
+for w in result.get('warnings', []):
+    print(f'WARNING: {w}')
 "
 ```
 
@@ -86,7 +114,9 @@ docker-compose up -d
 
 **First startup takes 5-15 minutes** as containers initialize.
 
-Access at: `http://localhost:8080`
+Access at: `http://localhost:8080` (HTTP is the Docker default — fine for local dev/lab use).
+
+**For remote access or production:** Put a reverse proxy (Nginx, Caddy) in front with TLS, or configure OpenCTI's native HTTPS via `APP__HTTPS_CERT__KEY` and `APP__HTTPS_CERT__CRT`. See [OpenCTI configuration docs](https://docs.opencti.io/latest/deployment/configuration/).
 
 ### Get Admin API Token
 
@@ -139,11 +169,11 @@ https://docs.opencti.io/latest/deployment/connectors/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENCTI_URL` | Yes | `http://localhost:8080` | OpenCTI instance URL |
+| `OPENCTI_URL` | Yes | `http://localhost:8080` | OpenCTI instance URL (use `https://` for remote) |
 | `OPENCTI_TOKEN` | Yes | - | API token from OpenCTI |
 | `OPENCTI_READ_ONLY` | No | `true` | Disable write operations |
 | `OPENCTI_TIMEOUT` | No | `60` | Request timeout (seconds) |
-| `OPENCTI_SSL_VERIFY` | No | `true` | Verify SSL certificates |
+| `OPENCTI_SSL_VERIFY` | No | `true` | Verify SSL certificates (set `false` for self-signed) |
 | `OPENCTI_MAX_RESULTS` | No | `100` | Maximum results per query |
 | `OPENCTI_MAX_RETRIES` | No | `3` | Retry attempts for failures |
 | `OPENCTI_RETRY_DELAY` | No | `1.0` | Initial retry delay (seconds) |
@@ -181,36 +211,32 @@ chmod 600 ~/.config/opencti-mcp/token
 
 ```bash
 python -c "
-from opencti_mcp import OpenCTIClient, Config
-config = Config.load()
+from opencti_mcp.config import Config
+from opencti_mcp.client import OpenCTIClient
+config = Config.from_env()
 client = OpenCTIClient(config)
-if client.is_available():
-    print('✓ Connected to OpenCTI')
-    # Test a simple query
-    results = client.search_threat_actors('APT', limit=1)
-    print(f'✓ Query working ({len(results)} results)')
+result = client.validate_connection(skip_connectivity=False)
+if result['valid']:
+    ver = result.get('opencti_version', 'unknown')
+    print(f'Connected to OpenCTI (version: {ver})')
 else:
-    print('✗ Connection failed')
+    for e in result.get('errors', []):
+        print(f'ERROR: {e}')
+for w in result.get('warnings', []):
+    print(f'WARNING: {w}')
 "
 ```
 
 ### Common Issues
 
-**Connection refused:**
-- Check OPENCTI_URL is correct
-- Verify OpenCTI is running: `docker ps | grep opencti`
-
-**401 Unauthorized:**
-- Check OPENCTI_TOKEN is correct
-- Token may have expired - generate new one in OpenCTI
-
-**SSL certificate errors:**
-- For self-signed certs: `export OPENCTI_SSL_VERIFY=false` (dev only)
-- For production: Use proper certificates
-
-**Empty results:**
-- OpenCTI may be empty - enable connectors to populate data
-- Check connector status in OpenCTI UI
+| Error | Cause | Fix |
+|-------|-------|-----|
+| Connection refused | OpenCTI not running or wrong port | Check `docker ps \| grep opencti` and `OPENCTI_URL` |
+| SSL certificate verify failed | Self-signed cert | Set `OPENCTI_SSL_VERIFY=false` (dev only) |
+| 401 Unauthorized | Bad or expired API token | Regenerate token in OpenCTI UI |
+| Name resolution failed | Wrong hostname | Verify `OPENCTI_URL` hostname is reachable |
+| Using HTTP for remote server | Credentials sent in plaintext | Switch to `https://` in `OPENCTI_URL` |
+| Empty results | No data in OpenCTI | Enable connectors to populate data (see above) |
 
 ---
 

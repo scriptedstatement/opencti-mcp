@@ -42,7 +42,8 @@ pip install -e .
 
 # Configure (requires OpenCTI instance - see SETUP.md)
 export OPENCTI_TOKEN="your-api-token"
-export OPENCTI_URL="http://localhost:8080"
+export OPENCTI_URL="http://localhost:8080"          # Local Docker
+# export OPENCTI_URL="https://opencti.example.com"  # Remote/cloud
 
 # Run server
 python -m opencti_mcp
@@ -120,7 +121,7 @@ Settings are loaded via `Config.load()` classmethod (`config.py`) with `SecretSt
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OPENCTI_URL` | `http://localhost:8080` | OpenCTI instance URL |
+| `OPENCTI_URL` | `http://localhost:8080` | OpenCTI instance URL (use `https://` for remote) |
 | `OPENCTI_TOKEN` | - | API token (required) |
 | `OPENCTI_READ_ONLY` | `true` | Disable write operations |
 | `OPENCTI_TIMEOUT` | `60` | Request timeout in seconds |
@@ -128,7 +129,7 @@ Settings are loaded via `Config.load()` classmethod (`config.py`) with `SecretSt
 | `OPENCTI_MAX_RETRIES` | `3` | Retry attempts for failures |
 | `OPENCTI_RETRY_DELAY` | `1.0` | Initial retry delay (seconds) |
 | `OPENCTI_RETRY_MAX_DELAY` | `30.0` | Maximum retry delay (seconds) |
-| `OPENCTI_SSL_VERIFY` | `true` | Verify SSL certificates |
+| `OPENCTI_SSL_VERIFY` | `true` | Verify SSL certificates (set `false` for self-signed) |
 | `OPENCTI_CIRCUIT_THRESHOLD` | `5` | Failures before circuit opens |
 | `OPENCTI_CIRCUIT_TIMEOUT` | `60` | Seconds before circuit recovery |
 | `OPENCTI_EXTRA_OBSERVABLE_TYPES` | - | Custom observable types (comma-separated) |
@@ -194,7 +195,8 @@ Add to your MCP settings (`~/.config/claude-code/settings.json`):
         "PYTHONPATH": "/path/to/opencti-mcp/src",
         "OPENCTI_TOKEN": "your-api-token",
         "OPENCTI_URL": "http://localhost:8080",
-        "OPENCTI_READ_ONLY": "true"
+        "OPENCTI_READ_ONLY": "true",
+        "OPENCTI_SSL_VERIFY": "true"
       }
     }
   }
@@ -264,12 +266,19 @@ python -c "from opencti_mcp import OpenCTIClient, Config; c = OpenCTIClient(Conf
 
 ## Production Considerations
 
+### Local Docker vs Remote/Cloud
+
+The default `OPENCTI_URL=http://localhost:8080` matches OpenCTI's standard Docker deployment, where the platform serves HTTP on port 8080. This is correct for local instances — traffic never leaves the machine.
+
+For remote or cloud instances, use HTTPS. OpenCTI supports TLS either natively (`APP__HTTPS_CERT__*` env vars) or via a reverse proxy (Nginx, Caddy, Traefik) — the reverse proxy approach is more common in production.
+
 ### Recommended Settings for Remote/Cloud Instances
 
 ```bash
+export OPENCTI_URL=https://opencti.example.com  # HTTPS for remote
 export OPENCTI_TIMEOUT=120         # Higher for cloud (default 60 may be tight for complex queries)
 export OPENCTI_MAX_RETRIES=3       # Retry on transient failures
-export OPENCTI_SSL_VERIFY=true     # Always for production
+export OPENCTI_SSL_VERIFY=true     # Always for production (false only for self-signed certs)
 export OPENCTI_READ_ONLY=true      # Unless writes needed
 ```
 
