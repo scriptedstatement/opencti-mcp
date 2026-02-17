@@ -158,7 +158,6 @@ class TestToolDispatch:
 
         assert "status" in result
         assert "opencti_available" in result
-        assert "opencti_url" in result
 
     @pytest.mark.asyncio
     async def test_list_connectors(self, mock_server: OpenCTIMCPServer):

@@ -1144,7 +1144,6 @@ class OpenCTIMCPServer:
             return {
                 "status": "healthy" if available else "unavailable",
                 "opencti_available": available,
-                "opencti_url": self.config.opencti_url
             }
 
         elif name == "list_connectors":
@@ -1168,14 +1167,7 @@ class OpenCTIMCPServer:
             }
 
         elif name == "get_cache_stats":
-            # Return cache statistics (health cache is in client)
-            return {
-                "health_cache": {
-                    "enabled": True,
-                    "ttl_seconds": 30,
-                },
-                "note": "Entity caching is planned for future release"
-            }
+            return await asyncio.to_thread(self.client.get_cache_stats)
 
         # === New Entity Search Handlers ===
         elif name == "search_campaign":

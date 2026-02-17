@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "Claude IR Workstation" }
+    { name = "AppliedIncidentResponse.com" }
 ]
 keywords = ["mcp", "opencti", "threat-intelligence", "security", "claude"]
 classifiers = [

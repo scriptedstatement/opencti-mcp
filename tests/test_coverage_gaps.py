@@ -990,11 +990,14 @@ class TestServerToolDispatchGaps:
 
         server = OpenCTIMCPServer(mock_config)
 
-        result = await server._dispatch_tool("get_cache_stats", {})
+        with patch.object(server.client, 'get_cache_stats') as mock_stats:
+            mock_stats.return_value = {"search": {"hits": 0, "misses": 0}}
 
-        # Result should contain cache stats structure
-        assert result is not None
-        assert "health_cache" in result
+            result = await server._dispatch_tool("get_cache_stats", {})
+
+            mock_stats.assert_called_once()
+            assert result is not None
+            assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_dispatch_search_campaign(self, mock_config):

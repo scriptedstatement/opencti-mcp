@@ -566,14 +566,16 @@ class TestCredentialExposure:
         assert "***" in repr_str
 
     def test_token_not_in_error_messages(self):
-        """Token not exposed in error messages."""
+        """Token value not exposed in error messages."""
+        secret_value = "super-secret-token-value-12345"
         try:
             Config(
-                opencti_url="http://localhost:8080",
-                opencti_token=SecretStr(""),
+                opencti_url="http://invalid-host-that-wont-resolve:9999",
+                opencti_token=SecretStr(secret_value),
             )
         except Exception as e:
-            assert "token" not in str(e).lower() or "secret" not in str(e).lower()
+            # The word "token" may appear (e.g., "token is required") but the VALUE must not
+            assert secret_value not in str(e)
 
     def test_secret_str_not_exposed_accidentally(self):
         """SecretStr prevents accidental exposure."""

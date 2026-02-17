@@ -1,6 +1,6 @@
 # MCP Server Reference
 
-This file contains a reference MCP server implementation from `/home/user/projects/rag-mcp/src/rag_mcp/server.py`.
+This file contains a reference MCP server implementation from `/path/to/rag-mcp/src/rag_mcp/server.py`.
 
 Use this as a template for implementing the OpenCTI MCP server.
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 ## Example: RAG-MCP Server Tools
 
-From `/home/user/projects/rag-mcp/src/rag_mcp/server.py`:
+From `/path/to/rag-mcp/src/rag_mcp/server.py`:
 
 ```python
 @app.list_tools()
@@ -171,5 +171,5 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
 Read the complete implementation:
 ```bash
-cat /home/user/projects/rag-mcp/src/rag_mcp/server.py
+cat /path/to/rag-mcp/src/rag_mcp/server.py
 ```
