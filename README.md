@@ -301,7 +301,7 @@ Use `get_network_status` tool to view:
 
 ## Acknowledgments
 
-Development assisted by Claude (Anthropic).
+Architecture and direction by Steve Anson. Implementation by Claude Code (Anthropic).
 
 ## License
 
