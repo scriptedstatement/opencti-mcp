@@ -2,7 +2,7 @@
 
 An MCP (Model Context Protocol) server providing comprehensive threat intelligence access to OpenCTI for Claude Code and other MCP clients.
 
-> **Note:** This is a proof-of-concept project for exploring AI-assisted incident response capabilities. Not intended for production use without additional validation and hardening appropriate to your environment.
+> **Note:** Validate and harden appropriately for your environment before production use.
 
 ## Installation Options
 

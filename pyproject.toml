@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "opencti-mcp"
-version = "0.1.0"
+version = "0.5.0"
 description = "OpenCTI MCP Server - Threat Intelligence for Claude Code"
 readme = "README.md"
 requires-python = ">=3.10"
