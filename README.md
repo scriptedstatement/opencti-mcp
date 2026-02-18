@@ -182,7 +182,7 @@ These extend the built-in allow-lists without removing standard STIX types.
 
 ### Claude Code Configuration
 
-Add to your MCP settings (`~/.config/claude-code/settings.json`):
+Add to your project-local `.mcp.json` (or see the parent [claude-ir](https://github.com/scriptedstatement/claude-ir) project for automated setup):
 
 ```json
 {

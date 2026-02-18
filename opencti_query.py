@@ -48,7 +48,7 @@ Usage:
 Dependencies:
     pip install pycti
 
-Author: Claude IR Workstation
+Author: AppliedIncidentResponse.com
 License: MIT
 """
 
@@ -478,7 +478,6 @@ class OpenCTIQuery:
             relations = []
 
         for rel in relations:
-            rel_type = rel.get("relationship_type", "")
             target = rel.get("to", {})
             target_type = target.get("entity_type", "")
             target_name = target.get("name", "")

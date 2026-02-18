@@ -15,7 +15,7 @@ Usage:
 """
 
 __version__ = "0.1.0"
-__author__ = "Claude IR Workstation"
+__author__ = "AppliedIncidentResponse.com"
 
 from .errors import (
     OpenCTIMCPError,
