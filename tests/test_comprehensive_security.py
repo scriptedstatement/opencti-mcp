@@ -193,15 +193,15 @@ class TestNoteTypeValidation:
         with pytest.raises(ValidationError, match="invalid characters"):
             validate_note_types(["analysis:test"])  # colon
 
-    def test_note_types_accepts_any_ascii_alphanumeric(self):
-        """Current implementation accepts any ASCII alphanumeric string.
+    def test_note_types_rejects_unknown_types(self):
+        """Unknown note types are rejected against VALID_NOTE_TYPES allowlist."""
+        with pytest.raises(ValidationError, match="Unknown note type"):
+            validate_note_types(["custom-type"])
 
-        NOTE: This doesn't validate against VALID_NOTE_TYPES.
-        Documenting current behavior.
-        """
-        # These are not in VALID_NOTE_TYPES but currently pass
-        result = validate_note_types(["custom-type", "my-note-type"])
-        assert result == ["custom-type", "my-note-type"]
+    def test_note_types_accepts_valid_types(self):
+        """Valid note types are accepted."""
+        result = validate_note_types(["analysis", "assessment"])
+        assert result == ["analysis", "assessment"]
 
 
 # =============================================================================
@@ -223,15 +223,10 @@ class TestRelationshipTypeValidation:
         with pytest.raises(ValidationError, match="invalid characters"):
             validate_relationship_types(["uses<script>"])
 
-    def test_relationship_type_accepts_any_ascii(self):
-        """Current implementation accepts any ASCII string with hyphens.
-
-        NOTE: This doesn't enforce VALID_RELATIONSHIP_TYPES.
-        Documenting current behavior.
-        """
-        # These are not in VALID_RELATIONSHIP_TYPES but currently pass
-        result = validate_relationship_types(["custom-relationship"])
-        assert result == ["custom-relationship"]
+    def test_relationship_type_rejects_unknown_types(self):
+        """Unknown relationship types are rejected against VALID_RELATIONSHIP_TYPES allowlist."""
+        with pytest.raises(ValidationError, match="Unknown relationship type"):
+            validate_relationship_types(["custom-relationship"])
 
     def test_relationship_type_length_limit(self):
         """Relationship types should enforce length limits."""

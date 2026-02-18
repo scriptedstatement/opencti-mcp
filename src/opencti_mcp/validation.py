@@ -668,6 +668,8 @@ def validate_note_types(values: list[str] | None, max_items: int = 5) -> list[st
         # Check for invalid characters (ASCII alphanumeric and hyphen only)
         if not all(c in _ASCII_ALNUM or c == '-' for c in v):
             raise ValidationError(f"Note type '{v}' contains invalid characters")
+        if v not in VALID_NOTE_TYPES:
+            raise ValidationError(f"Unknown note type '{v}'. Valid: {', '.join(sorted(VALID_NOTE_TYPES))}")
         validated.append(v)
 
     return validated if validated else None
@@ -819,7 +821,7 @@ VALID_RELATIONSHIP_TYPES = frozenset({
     'owns', 'part-of', 'resides-in', 'resolves-to', 'belongs-to',
     # OpenCTI custom types
     'participates-in', 'cooperates-with', 'employed-by', 'citizen-of',
-    'national-of', 'resides-in', 'participates-in',
+    'national-of',
 })
 
 
@@ -854,6 +856,8 @@ def validate_relationship_types(values: list[str] | None) -> list[str] | None:
         # Uses explicit ASCII alphanumeric set instead of c.isalnum()
         if not all(c in _ASCII_ALNUM or c == '-' for c in v):
             raise ValidationError(f"Relationship type '{v}' contains invalid characters")
+        if v not in VALID_RELATIONSHIP_TYPES:
+            raise ValidationError(f"Unknown relationship type '{v}'. Valid: {', '.join(sorted(VALID_RELATIONSHIP_TYPES))}")
         validated.append(v)
 
     return validated if validated else None

@@ -187,8 +187,6 @@ class SlidingWindowMetrics:
         if len(samples) < 2:
             return None
 
-        sorted_samples = sorted(samples)
-
         return LatencyStats(
             sample_count=len(samples),
             min_ms=min(samples),
@@ -341,7 +339,6 @@ class AdaptiveMetrics:
 
         # Calculate adaptive retry delay based on latency variability
         # Higher variability = longer initial delay
-        variability = stats.stddev_ms / stats.mean_ms if stats.mean_ms > 0 else 0
         retry_delay = max(MIN_RETRY_DELAY, min(stats.p95_ms / 1000 * 0.5, MAX_RETRY_DELAY))
 
         # Adjust retries based on success rate
@@ -393,18 +390,18 @@ class AdaptiveMetrics:
 
     def _default_probe(self, client: Any) -> ProbeResult:
         """Default probe function using client health check."""
-        start = time.time()
+        start = time.monotonic()
         try:
             # Use a lightweight query
             client.connect().stix_cyber_observable.list(first=1)
-            latency_ms = (time.time() - start) * 1000
+            latency_ms = (time.monotonic() - start) * 1000
             return ProbeResult(
                 timestamp=time.time(),
                 latency_ms=latency_ms,
                 success=True,
             )
         except Exception as e:
-            latency_ms = (time.time() - start) * 1000
+            latency_ms = (time.monotonic() - start) * 1000
             return ProbeResult(
                 timestamp=time.time(),
                 latency_ms=latency_ms,

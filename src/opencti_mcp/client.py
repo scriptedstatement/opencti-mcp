@@ -537,9 +537,9 @@ class OpenCTIClient:
             except Exception as e:
                 last_exception = e
 
-                # Record the failure in adaptive metrics
+                # Record the failure in adaptive metrics (per-attempt time)
                 self._adaptive_metrics.record_request(
-                    start_time=start_time,
+                    start_time=attempt_start,
                     success=False,
                     error_type=type(e).__name__
                 )
@@ -639,7 +639,7 @@ class OpenCTIClient:
 
         Also respects circuit breaker state.
         """
-        now = time()
+        now = monotonic()
 
         # Check circuit breaker - if open, service is unavailable
         if not self._circuit_breaker.allow_request():
@@ -663,7 +663,7 @@ class OpenCTIClient:
             self._circuit_breaker.record_failure()
 
         # Cache result
-        self._health_cache = (result, now)
+        self._health_cache = (result, monotonic())
         return result
 
     def clear_health_cache(self) -> None:
@@ -696,7 +696,8 @@ class OpenCTIClient:
         self.clear_health_cache()
         self._circuit_breaker.reset()
         self._adaptive_metrics.reset()
-        logger.info("Reconnection complete - caches cleared, circuit breaker reset")
+        self._client = None  # Force fresh connect() on next request
+        logger.info("Reconnection complete - caches cleared, client reset, circuit breaker reset")
 
     # =========================================================================
     # Startup Validation and Version Checking
@@ -788,11 +789,12 @@ class OpenCTIClient:
 
     def _is_local_url(self, url: str) -> bool:
         """Check if URL points to localhost."""
-        local_hosts = {"localhost", "127.0.0.1", "::1", "[::1]"}
-        for host in local_hosts:
-            if host in url:
-                return True
-        return False
+        from urllib.parse import urlparse
+        try:
+            hostname = urlparse(url).hostname or ""
+        except Exception:
+            return False
+        return hostname in {"localhost", "127.0.0.1", "::1"}
 
     def _get_opencti_version(self, client: Any) -> dict[str, str] | None:
         """Get OpenCTI server version information.
@@ -1176,13 +1178,14 @@ class OpenCTIClient:
             ) or []
             results.extend(threat_actors)
 
-            # Deduplicate by name
+            # Deduplicate by id (name-based dedup can drop distinct actors)
             seen = set()
             unique = []
             for r in results:
-                name = r.get("name", "").lower()
-                if name not in seen:
-                    seen.add(name)
+                entity_id = r.get("id")
+                if not entity_id or entity_id not in seen:
+                    if entity_id:
+                        seen.add(entity_id)
                     unique.append(r)
 
             # Apply offset and limit
@@ -2020,16 +2023,17 @@ class OpenCTIClient:
                 ) or []
                 results.extend(incoming)
 
-            # Format and deduplicate
-            formatted = []
+            # Deduplicate first, then slice to limit
             seen_ids = set()
-            for r in results[:limit]:
-                rel_id = r.get("id", "")
-                if rel_id not in seen_ids:
-                    seen_ids.add(rel_id)
-                    formatted.append(self._format_relationship(r))
+            unique = []
+            for r in results:
+                rel_id = r.get("id")
+                if not rel_id or rel_id not in seen_ids:
+                    if rel_id:
+                        seen_ids.add(rel_id)
+                    unique.append(r)
 
-            return formatted
+            return [self._format_relationship(r) for r in unique[:limit]]
 
         except Exception as e:
             logger.error(f"Get relationships failed: {e}")
