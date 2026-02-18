@@ -17,10 +17,10 @@ from opencti_mcp.client import OpenCTIClient, CircuitState
 from opencti_mcp.feature_flags import FeatureFlags, reset_feature_flags
 
 
-# Skip all tests if OpenCTI not available
+# Skip unless explicitly opted in (live tests hit a real OpenCTI instance)
 pytestmark = pytest.mark.skipif(
-    os.environ.get("SKIP_LIVE_TESTS", "false").lower() == "true",
-    reason="Live tests disabled"
+    os.environ.get("RUN_LIVE_TESTS", "false").lower() != "true",
+    reason="Live tests require RUN_LIVE_TESTS=true"
 )
 
 
