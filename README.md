@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> **This repository has been retired.** It is no longer maintained.
+>
+> This package is now part of the **[AppliedIR/sift-mcp](https://github.com/AppliedIR/sift-mcp)** monorepo.
+>
+> Documentation: [appliedir.github.io/aiir](https://appliedir.github.io/aiir/)
+
+---
+
 # OpenCTI MCP Server
 
 An MCP (Model Context Protocol) server providing comprehensive threat intelligence access to OpenCTI for Claude Code and other MCP clients.
